@@ -1,34 +1,54 @@
-# ⚖️ Adli Bilirkişi Raporu Asistanı (AI Skill)
-
-Bu depo, Türk Hukuk Sistemine uygun, HMK ve Bilirkişilik Kanunu standartlarında resmi adli raporlar hazırlamak için tasarlanmış özel bir Yapay Zeka (AI) "Skill" dosyasını içermektedir.
-
-Yoğun dosya yükü olan adli bilirkişilerin; keşif notlarını, teknik tespitlerini ve hesaplamalarını saniyeler içinde mahkemeye sunulmaya hazır, resmi formatlı bir rapora dönüştürmesine yardımcı olur.
-
-## 🌟 Temel Özellikler
-
-- **Hukuki Standartlara Tam Uyum:** Yapay zeka; 6100 sayılı HMK, 6754 sayılı Bilirkişilik Kanunu ve Bilirkişilik Yönetmeliği ile Rehber İlkeler'i referans alarak çalışır.
-- **Görev Sınırlarının Korunması:** Asistan, hakimin takdir yetkisine giren konularda (hukuki nitelendirme, kusur oranı veya ceza tayini) kesinlikle görüş bildirmez; sadece teknik verileri ve tespitleri sunar.
-- **Matematiksel Doğrulama & Anti-Halüsinasyon:** Arazi ve miras payı hesaplamalarında "payın hiçbir zaman paydayı geçmemesi" gibi kritik mantık kontrollerini otomatik yapar. Meyve bahçesi değerlemeleri, 5 yıllık ortalama verim ve rekolte bedeli gibi hesaplamalarda formülleri adım adım işler.
-- **Teknik ve Zirai İnceleme Desteği:** Zirai hasar tespitleri, toprak analizleri, güzergah/parsel eşleştirmeleri ve kamulaştırma bedelleri gibi teknik konularda elde edilen taslak notları profesyonel bir dile çevirir.
-- **Sade ve Anlaşılır Dil:** Teknik terimleri, mahkeme heyetinin ve hukukçuların net bir şekilde anlayabileceği sade bir yapıya kavuşturur.
-
-## 🚀 Nasıl Kullanılır?
-
-Bu asistan, `.skill` formatını destekleyen yapay zeka arayüzleri ve platformları için paketlenmiştir.
-
-1. **İndirin:** Bu depoda yer alan `bilirkisi-raporu.skill` dosyasını bilgisayarınıza indirin.
-2. **İçe Aktarın:** Kullandığınız yapay zeka platformunun (Claude, özel ajan platformları vb.) yetenek/skill yükleme arayüzüne gidin ve dosyayı "Import" (İçe Aktar) seçeneği ile yükleyin.
-3. **Çalıştırın:** Keşif tutanaklarınızı, ham notlarınızı veya hesaplanacak verilerinizi asistana iletin ve raporunuzu oluşturmasını isteyin.
-
-## 📂 İçerik Mimarisi (Skill Neleri Kapsar?)
-
-Skill dosyasının arka planında çalışan referans yapıları şunlardır:
-- `6100-hmk-bilirkisi.md` & `6754-kanun.md`: Yasal çerçeve ve sınırlar.
-- `rehber-ilkeler.md` & `gorev-ve-etik.md`: Bilirkişi davranış kuralları.
-- `teknik-inceleme.md`: Zirai ve mühendislik hesaplama metodolojileri.
-- `resmi-rapor-sablonu.docx`: Çıktıların oturtulacağı adliye standartlarındaki taslak.
-- `sade-dil.md` & `son-kontrol.md`: Anlaşılabilirlik ve veri eşleştirme denetimleri.
-
-## ⚠️ Yasal Uyarı
+Bilirkişi Raporu Asistanı (AI Skill)
+Türk yargısına sunulacak bilirkişi raporlarının usul, yapı, dil ve son kontrol katmanını sağlayan bir yapay zeka skill paketi.
+Amaç, raporun mevzuatın saydığı zorunlu unsurları eksiksiz taşıması, görev sınırının aşılmaması, her bulgunun kaynağa bağlanması ve sonucun denetime elverişli olmasıdır. Paket alan bağımsızdır: bir uzmanlık alanının hesap yöntemini içermez, o alanın yerine geçmez.
+Kapsam
+İçerir	İçermez
+Görev kapsamı ve etik sınırlar (hakimin takdir alanına girmeme)	Alana özgü hesap yöntemleri ve birim ölçütler
+Zorunlu rapor unsurları: HMK m.279/2 ve Yönetmelik m.55/1	Verim, hasar, rekolte, amortisman, kamulaştırma bedeli formülleri
+Rapor yapısı ve resmi DOCX şablonunun doldurulması	Piyasa fiyatı, birim fiyat listesi veya istatistik verisi
+Süreler: HMK m.274 teslim süresi, m.275 ve Yönetmelik m.53-54 bir haftalık bildirimler	Taraf dilekçesi, uzman görüşü, mahkeme kararı yazımı
+Sade ve doğal rapor dili; sadeleştirmede anlam kaymasını önleme	İmza, e-imza, UYAP gönderimi veya resmi başvuru
+Ek rapor, raporlar arası çelişki giderme, heyet ve karşı görüş düzeni	Bilirkişilik eğitimi, sicil kaydı veya yeterlilik belgesi
+19 maddelik son kontrol listesi ve kaynak sürüm disiplini	Güncel mevzuat taraması (paket, yüklenen nüshalara dayanır)
+Alan hesabı gerekiyorsa
+Zirai, inşaat, mali müşavirlik gibi bir alanın hesabı gerekiyorsa bu paketi o alanın skilli ile birlikte kullanın. Hesap yöntemi alan skillinden, görev sınırı ve zorunlu rapor unsurları bu paketten gelir. Alan skilli yoksa paket hesabı uydurmaz; hangi ölçütün hangi uzmanlıktan gerektiğini raporun sınırlılık bölümünde belirtir.
+Paket içeriği
+```
+bilirkisi-raporu/
+├── SKILL.md                          altı adımlık iş akışı ve çekirdek sınırlar
+├── references/
+│   ├── gorev-ve-etik.md              ön inceleme, teknik iş / yargısal takdir ayrımı, süreler, gizlilik
+│   ├── teknik-inceleme.md            çalışma kodları, soru-belge-yöntem-hesap zinciri, çıkarım kontrolleri
+│   ├── rapor-yapisi.md               zorunlu içeriğin iki dayanağı ve altı ana bölüm
+│   ├── sade-dil.md                   ağır ifade / açık karşılık tablosu, sadeleştirmede güvenlik kuralları
+│   ├── son-kontrol.md                teslim öncesi 19 maddelik denetim
+│   ├── ek-rapor-ve-heyet.md          ek rapor, çelişkili raporlar, heyet ve karşı görüş
+│   ├── kaynak-haritasi.md            sekiz kaynağın işlevi, kaynaklar arası çelişkiler, güncellik kontrolü
+│   ├── kaynak-kunyesi.json           her kaynağın SHA-256 değeri, boyutu ve temsil biçimi
+│   └── metinler/                     6754 sayılı Kanun, HMK m.266-293 seçkisi, Yönetmelik,
+│                                     Rehber İlkeler, 169 sayılı Genelge
+├── assets/resmi-rapor-sablonu.docx   Hukuk / İdare / Vergi mahkemeleri resmi rapor şablonu
+└── agents/openai.yaml                arayüz tanımı
+```
+Kaynaklar ve sürüm disiplini
+Paket, kullanıcının yüklediği sekiz kaynağa dayanır. Her kaynağın adı, boyutu ve SHA-256 özeti `references/kaynak-kunyesi.json` dosyasındadır. Hazırlanma tarihi, mevzuat doğrulama tarihi değildir. Somut bir dosyada yürürlük, değişiklik veya süre sonucu etkiliyorsa Resmi Gazete, Mevzuat Bilgi Sistemi ve Bilirkişilik Daire Başkanlığı kaynaklarından yeniden doğrulanmalıdır.
+Paket, kaynaklar arasındaki bilinen tutarsızlıkları da kayda geçirir. Örnek: Temel Eğitim Kaynak Kitabı rapor içeriği listesi için Yönetmelik m.56/1'e atıf yapar; liste yüklenen Yönetmelikte m.55/1'dedir. Paket, kitabın atfını çoğaltmak yerine Yönetmelikten doğrulamayı şart koşar.
+Telif nedeniyle Temel Eğitim Kaynak Kitabı ve Katılımcı El Kitabı'nın tam metni pakete eklenmemiş, yalnızca ilgili ilkelerin özgün özetleri ve sayfa yönlendirmeleri konulmuştur.
+Kurulum
+`bilirkisi-raporu.skill` dosyasını indirin.
+Kullandığınız platformun skill yükleme arayüzünden içe aktarın.
+Görevlendirme kararını, keşif tutanağını ve dosya belgelerini verip rapor hazırlamasını, mevcut bir raporu sadeleştirmesini ya da usul yönünden denetlemesini isteyin.
+Kaynaktan derleme
+Depoda kaynak dosyalar ayrı ayrı sürümlenir; `.skill` paketi bunlardan üretilir:
+```bash
+python3 derle.py
+```
+Bu, `bilirkisi-raporu/` klasörünü `bilirkisi-raporu.skill` olarak paketler ve içeriğin bütünlüğünü kontrol eder.
+Sınırlar
+Bu bir yardımcı araçtır. Bilirkişinin bizzat yapması gereken incelemenin, keşfin, ölçümün, mesleki kanaatinin ve imzasının yerine geçmez (6754 sayılı Kanun m.3, HMK m.276-277, Yönetmelik m.5/4).
+Paket, hukuki nitelendirme yapmaz; kusur oranı, asli/tali kusur, sorumluluk payı veya dava sonucu üretmez (Yönetmelik m.55/4, HMK m.279/4, Rehber İlkeler 27). Bu sınır, "takdir mahkemenindir" cümlesi eklenerek aşılamaz.
+Üretilen metnin teknik doğruluğu, hukuki sorumluluğu ve imza yetkisi tamamen dosyaya atanan bilirkişiye aittir. UYAP üzerinden sunmadan önce insan kontrolü zorunludur.
+Lisans
+Paketteki kanun, yönetmelik, genelge ve resmi şablon metinleri, FSEK m.31 uyarınca serbestçe faydalanılabilen resmi metinlerdir. Rehber dosyalarının lisansı için `LICENSE` dosyasına bakınız.
 
 Bu araç bir yapay zeka asistanıdır ve bilirkişilerin iş yükünü hafifletmek, formatlama süreçlerini hızlandırmak için tasarlanmıştır. Üretilen raporlardaki nihai teknik doğruluk, hukuki sorumluluk ve imza yetkisi **tamamen dosyaya atanan adli bilirkişiye aittir.** Raporları UYAP üzerinden mahkemeye sunmadan önce mutlaka son bir insan kontrolünden geçirmelisiniz.
