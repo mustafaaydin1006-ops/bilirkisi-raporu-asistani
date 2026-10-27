@@ -1,0 +1,12 @@
+{
+  "sembol": "ARKMUSDT",
+  "sermaye_limiti_usdt": 100,
+  "ucret_orani": 0.001,
+  "kayma_orani": 0.0005,
+  "gunluk_zarar_limiti": 0.05,
+  "maks_dusus_limiti": 0.25,
+  "hedef_dusus_p95": 0.20,
+  "kilit_acilim_tarihleri": [],
+  "egitim_gun": 240,
+  "test_gun": 60
+}
