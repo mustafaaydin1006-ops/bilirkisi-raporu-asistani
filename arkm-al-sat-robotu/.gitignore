@@ -1,9 +1,0 @@
-.env
-veri/
-kayitlar/
-rapor/
-durum.json
-durum.tmp
-parametreler.json
-__pycache__/
-.pytest_cache/
