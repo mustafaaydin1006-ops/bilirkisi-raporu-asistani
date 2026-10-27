@@ -216,6 +216,11 @@ class BinanceClient:
     def account(self) -> dict:
         return self._request("GET", "/api/v3/account", signed=True)
 
+    def api_restrictions(self) -> dict:
+        """API anahtarinin izinleri (enableReading, enableSpotAndMarginTrading,
+        enableWithdrawals, ipRestrict ...). Testnet bu uc noktayi desteklemez."""
+        return self._request("GET", "/sapi/v1/account/apiRestrictions", signed=True)
+
     def balances(self) -> dict[str, tuple[float, float]]:
         return {b["asset"]: (float(b["free"]), float(b["locked"]))
                 for b in self.account().get("balances", [])}

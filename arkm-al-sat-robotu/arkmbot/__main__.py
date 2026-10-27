@@ -5,6 +5,7 @@
     python -m arkmbot backtest                   # secilen parametrelerle tum gecmis (ornek ici) test
     python -m arkmbot calistir                   # paper (sanal) islem
     python -m arkmbot calistir --canli --onayliyorum   # gercek emirlerle islem
+    python -m arkmbot baglanti                   # API anahtari ve bakiye kontrolu (emir vermez)
     python -m arkmbot durum                      # durum ozeti
     python -m arkmbot devam                      # durdurulan robotu yeniden ac
 """
@@ -17,7 +18,7 @@ import os
 import sys
 from pathlib import Path
 
-from .binance_client import BinanceClient
+from .binance_client import BinanceClient, BinanceError
 from .config import load_settings
 
 log = logging.getLogger("arkmbot")
@@ -99,6 +100,75 @@ def cmd_backtest(s) -> None:
     print(f"\nIslem listesi: {out}")
 
 
+def trade_client_from_env(s, testnet: bool) -> BinanceClient:
+    key, secret = os.environ.get("BINANCE_API_KEY"), os.environ.get("BINANCE_API_SECRET")
+    if not key or not secret:
+        sys.exit("BINANCE_API_KEY ve BINANCE_API_SECRET tanimli degil (.env dosyasina yazin).")
+    base = s.testnet_adresi if testnet else s.api_adresi
+    return BinanceClient(base, api_key=key, api_secret=secret,
+                         market_data_url=base if testnet else s.veri_adresi)
+
+
+def check_connection(client: BinanceClient, s, testnet: bool) -> tuple[list[str], list[str]]:
+    """Emir vermeden baglantiyi denetler. (bilgi satirlari, engelleyici sorunlar) dondurur."""
+    info, problems = [], []
+    client.sync_time()
+    info.append(f"Binance sunucu saati farki: {client.time_offset_ms} ms")
+    acc = client.account()
+    if acc.get("canTrade"):
+        info.append("Hesap islem izni: var")
+    else:
+        problems.append("Hesapta islem izni yok (canTrade=false).")
+    if testnet:
+        info.append("Testnet: anahtar izinleri sorgulanamaz, atlandi.")
+    else:
+        try:
+            r = client.api_restrictions()
+        except BinanceError as exc:
+            problems.append(f"API anahtari izinleri okunamadi: {exc}")
+        else:
+            if r.get("enableWithdrawals"):
+                problems.append("TEHLIKE: Bu API anahtarinda PARA CEKME izni acik. Binance'te hemen kapatin.")
+            if not r.get("enableSpotAndMarginTrading"):
+                problems.append("Anahtarda 'Enable Spot & Margin Trading' izni kapali.")
+            else:
+                info.append("Anahtar spot islem izni: var")
+            info.append("IP kisitlamasi: " + ("var" if r.get("ipRestrict") else "YOK (tanimlamaniz onerilir)"))
+    rules = client.symbol_rules(s.sembol)
+    free = {b["asset"]: float(b["free"]) for b in acc.get("balances", [])}
+    quote = free.get(rules.quote_asset, 0.0)
+    info.append(f"Spot cuzdan {rules.quote_asset}: {quote:.2f} | {rules.base_asset}: {free.get(rules.base_asset, 0.0):.4f}")
+    if quote < s.min_islem_tutari:
+        problems.append(f"Spot cuzdanda yeterli {rules.quote_asset} yok (en az {s.min_islem_tutari:g}). "
+                        "Fonlama cuzdanindan Spot cuzdana aktarin.")
+    elif quote < s.sermaye_limiti_usdt:
+        info.append(f"Not: bakiye sermaye_limiti_usdt ({s.sermaye_limiti_usdt:g}) degerinden az; "
+                    f"robot en fazla {quote:.2f} {rules.quote_asset} kullanabilir.")
+    stop_type = "STOP_LOSS" if "STOP_LOSS" in rules.order_types else "STOP_LOSS_LIMIT"
+    if stop_type not in rules.order_types:
+        problems.append(f"{s.sembol} stop emri desteklemiyor; robot koruyucu stop koyamaz.")
+    info.append(f"{s.sembol}: en kucuk islem {rules.min_notional.normalize()} {rules.quote_asset}, "
+                f"miktar adimi {rules.step_size.normalize()}, koruyucu emir turu {stop_type}")
+    return info, problems
+
+
+def cmd_baglanti(s, testnet: bool) -> None:
+    client = trade_client_from_env(s, testnet)
+    try:
+        info, problems = check_connection(client, s, testnet)
+    except BinanceError as exc:
+        sys.exit(f"Baglanti basarisiz: {exc}\nAnahtar/gizli anahtar hatali, IP kisitlamasi bu bilgisayari "
+                 "kapsamiyor veya bolgeniz api.binance.com'a erisemiyor olabilir.")
+    for line in info:
+        print("  " + line)
+    if problems:
+        print("\nSORUNLAR:")
+        for p in problems:
+            print("  - " + p)
+        sys.exit(1)
+    print("\nBaglanti hazir. Hicbir emir gonderilmedi.")
+
+
 def cmd_calistir(s, live: bool, confirmed: bool, testnet: bool) -> None:
     from .bot import Bot
     from .broker import LiveBroker, PaperBroker
@@ -106,12 +176,7 @@ def cmd_calistir(s, live: bool, confirmed: bool, testnet: bool) -> None:
     if live:
         if not confirmed:
             sys.exit("Canli mod gercek para kullanir. Onayliyorsaniz --onayliyorum ekleyin.")
-        key, secret = os.environ.get("BINANCE_API_KEY"), os.environ.get("BINANCE_API_SECRET")
-        if not key or not secret:
-            sys.exit("BINANCE_API_KEY ve BINANCE_API_SECRET tanimli degil (.env dosyasina yazin).")
-        base = s.testnet_adresi if testnet else s.api_adresi
-        trade_client = BinanceClient(base, api_key=key, api_secret=secret,
-                                     market_data_url=base if testnet else s.veri_adresi)
+        trade_client = trade_client_from_env(s, testnet)
         broker = LiveBroker(trade_client, s.sembol, s.ucret_orani, s.stop_limit_tamponu)
         mode = "testnet" if testnet else "canli"
     else:
@@ -162,6 +227,8 @@ def main(argv: list[str] | None = None) -> None:
     c.add_argument("--canli", action="store_true", help="gercek emir gonder")
     c.add_argument("--onayliyorum", action="store_true", help="canli mod onayi")
     c.add_argument("--testnet", action="store_true", help="Binance spot testnet kullan")
+    b = sub.add_parser("baglanti")
+    b.add_argument("--testnet", action="store_true", help="Binance spot testnet anahtarini dene")
     sub.add_parser("durum")
     sub.add_parser("devam")
     args = ap.parse_args(argv)
@@ -177,6 +244,8 @@ def main(argv: list[str] | None = None) -> None:
         cmd_backtest(s)
     elif args.komut == "calistir":
         cmd_calistir(s, args.canli or args.testnet, args.onayliyorum or args.testnet, args.testnet)
+    elif args.komut == "baglanti":
+        cmd_baglanti(s, args.testnet)
     elif args.komut == "durum":
         cmd_durum(s)
     elif args.komut == "devam":

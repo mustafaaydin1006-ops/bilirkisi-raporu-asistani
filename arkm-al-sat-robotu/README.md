@@ -4,7 +4,7 @@ ARKM/USDT paritesinde Binance spot piyasasında **kendi kendine araştırma yapa
 
 > **Risk uyarısı.** Kripto para işlemleri sermayenin tamamını kaybetme riski taşır. ARKM, zirvesinden %97'nin üzerinde değer kaybetmiş, oynaklığı çok yüksek bir varlıktır. Bu robot kar garantisi vermez; geçmiş performans geleceği göstermez. Robot, geçmişte üstünlüğü gösterilemeyen durumlarda **işlem açmamak** üzere tasarlanmıştır. Kullanmadan önce mutlaka paper (sanal) modda deneyin ve yalnızca kaybetmeyi göze alabileceğiniz bir tutarla başlayın.
 
-> **Bu sürüm hakkında.** Robot hazırlanırken çalışma ortamından Binance'e ağ erişimi engelliydi. Bu nedenle **gerçek ARKM verisiyle backtest sonucu bu depoda yoktur**; uydurma bir performans rakamı verilmemiştir. Kod, elle hesaplanmış senaryolar ve yapay veriyle 46 testte doğrulanmıştır. Gerçek araştırma, `arastir` komutunu kendi bilgisayarınızda çalıştırdığınızda ARKM'nin tüm geçmişi indirilerek yapılır.
+> **Bu sürüm hakkında.** Robot hazırlanırken çalışma ortamından Binance'e ağ erişimi engelliydi. Bu nedenle **gerçek ARKM verisiyle backtest sonucu bu depoda yoktur**; uydurma bir performans rakamı verilmemiştir. Kod, elle hesaplanmış senaryolar ve yapay veriyle 50 testte doğrulanmıştır. Gerçek araştırma, `arastir` komutunu kendi bilgisayarınızda çalıştırdığınızda ARKM'nin tüm geçmişi indirilerek yapılır.
 
 Tasarımın ayrıntılı gerekçesi, ARKM hakkındaki kaynaklı bilgiler ve sahadaki robotlardan alınan uygulamalar için: **[ARASTIRMA.md](ARASTIRMA.md)**
 
@@ -46,7 +46,7 @@ cd arkm-al-sat-robotu
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m pytest -q                # 46 test gecmeli
+python -m pytest -q                # 50 test gecmeli
 ```
 
 ## Kullanım adımları
@@ -101,24 +101,58 @@ python -m arkmbot calistir --testnet
 
 testnet.binance.vision için ayrı API anahtarı gerekir. Testnet fiyatları gerçek piyasadan farklıdır; bu mod yalnızca emir akışını denemek içindir.
 
-### 6. Canlı mod
+### 6. Binance hesabınıza bağlama
+
+**a) API anahtarı oluşturun** (binance.com, web sitesi)
+1. Profil simgesi → **Hesap** → **API Yönetimi** → **API Oluştur**.
+2. Anahtar türü olarak **Sistem tarafından oluşturulan (System generated)** seçeneğini seçin. Robot bu türün kullandığı HMAC imzasını kullanır.
+3. Bir ad verin (ör. `arkm-robot`) ve güvenlik doğrulamasını (2FA) tamamlayın.
+4. Ekranda görünen **API Key** ve **Secret Key** değerlerini hemen kopyalayın. Gizli anahtar yalnızca bir kez gösterilir.
+5. **Kısıtlamaları düzenle** bölümünde:
+   - ✅ Enable Reading (okuma)
+   - ✅ Enable Spot & Margin Trading (spot işlem)
+   - ❌ **Enable Withdrawals (para çekme): asla açmayın**
+   - ✅ **Restrict access to trusted IPs only**: robotu çalıştıracağınız bilgisayarın veya sunucunun IP adresini yazın.
+
+**b) Anahtarları robota verin**
 
 ```bash
-cp .env.example .env               # anahtarlari .env dosyasina yazin
+cp .env.example .env               # Windows: copy .env.example .env
+```
+
+`.env` dosyasını bir metin düzenleyiciyle açıp anahtarları yazın (tırnak ve boşluk olmadan):
+
+```
+BINANCE_API_KEY=buraya_api_key
+BINANCE_API_SECRET=buraya_secret_key
+```
+
+`.env` dosyasını kimseyle paylaşmayın; `.gitignore` içinde olduğu için GitHub'a gönderilmez.
+
+**c) Spot cüzdana USDT koyun.** Robot yalnızca **Spot** cüzdandaki USDT'yi kullanır. USDT'niz Fonlama (Funding) cüzdanındaysa Binance'te **Cüzdan → Transfer** ile Spot'a aktarın. Robotun kullanacağı azami tutarı `ayarlar.json` içindeki `sermaye_limiti_usdt` belirler (varsayılan 100).
+
+**d) Bağlantıyı test edin.** Bu komut hiçbir emir göndermez:
+
+```bash
+python -m arkmbot baglanti
+```
+
+Komut sunucu saati farkını, hesabın işlem iznini ve anahtarın izinlerini kontrol eder. Para çekme izni açıksa **TEHLİKE** uyarısı verir. Ayrıca IP kısıtlamasını, Spot USDT bakiyesini ve ARKMUSDT için en küçük işlem tutarını gösterir. "Bağlantı hazır" yazmadan canlı moda geçmeyin.
+
+**e) Canlı modu başlatın**
+
+```bash
 python -m arkmbot calistir --canli --onayliyorum
 ```
 
-**API anahtarı güvenliği:**
-- Yalnızca **"Enable Reading"** ve **"Enable Spot & Margin Trading"** izinlerini açın.
-- **"Enable Withdrawals" (para çekme) iznini asla açmayın.**
-- Anahtarı robotun çalıştığı sunucunun IP adresiyle kısıtlayın.
-- `.env` dosyasını kimseyle paylaşmayın; `.gitignore` içindedir.
+Robot işlem açtığında Binance'te **Emirler → Açık Emirler** altında ARKMUSDT için bekleyen bir **Stop** satış emri görürsünüz. Bu emir robotun zarar kes emridir; elle iptal etmeyin.
 
-**Not:** Robot Binance global (binance.com) spot API'si içindir. Binance TR farklı bir platform ve API kullanır; desteklenmez.
+**Not:** Robot Binance global (binance.com) spot API'si içindir. Binance TR farklı bir platform ve API kullanır; desteklenmez. Bulunduğunuz yerden api.binance.com'a erişilemiyorsa `baglanti` komutu hata verir.
 
 ### Diğer komutlar
 
 ```bash
+python -m arkmbot baglanti         # API anahtari, izin ve bakiye kontrolu (emir vermez)
 python -m arkmbot durum            # acik pozisyon, nakit, durdurma durumu
 python -m arkmbot devam            # maksimum dusus nedeniyle durdurulan robotu yeniden ac
 ```
@@ -191,7 +225,7 @@ arkm-al-sat-robotu/
 │   ├── broker.py           canli Binance ve paper emir katmani
 │   ├── bot.py              canli dongu, risk korumalari, durum kaydi
 │   └── __main__.py         komut satiri
-└── tests/                  46 test (elle hesaplanmis senaryolar dahil)
+└── tests/                  50 test (elle hesaplanmis senaryolar dahil)
 ```
 
 ## Bilinen sınırlamalar
